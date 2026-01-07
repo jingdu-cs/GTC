@@ -39,7 +39,7 @@ To ensure a reproducible environment, we recommend using a virtual environment (
 
 1. **Clone the repository**:
 ```bash
-git clone [your-repository-url]
+git clone jingdu-cs/GTC.git
 cd GTC
 
 ```
