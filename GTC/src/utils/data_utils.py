@@ -175,14 +175,7 @@ def get_resize_size(image, max_size):
         max_size:
 
     Returns:
-
-    Note the height/width order difference
-    >>> pil_img = Image.open("raw_img_tensor.jpg")
-    >>> pil_img.size
-    (640, 480)  # (width, height)
-    >>> np_img = np.array(pil_img)
-    >>> np_img.shape
-    (480, 640, 3)  # (height, width, 3)
+        size
     """
     # note the order of height and width for different inputs
     if isinstance(image, torch.Tensor):
@@ -244,9 +237,6 @@ class ImageResize(object):
 
 
 def get_imagenet_transform(min_size=600, max_size=1000):
-    """parameters from https://github.com/pytorch/examples/blob/master/imagenet/main.py
-    This simply crop the center square from the image
-    """
     if min_size != 600:
         import warnings
         warnings.warn(f'Warning: min_size is not used in image transform, '
@@ -361,8 +351,6 @@ def repeat_tensor_rows(raw_tensor, row_repeats):
         return raw_tensor.index_select(0, indices)
 
 
-
-#### Data utils
 import io
 def load_decompress_img_from_lmdb_value(lmdb_value):
     """
