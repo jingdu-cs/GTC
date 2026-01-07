@@ -101,12 +101,11 @@ class Trainer(AbstractTrainer):
         self.alpha1 = config['alpha1']
         self.alpha2 = config['alpha2']
         self.beta = config['beta']
-        
-        # 添加可视化控制参数
+
         self.enable_epoch_visualization = config['enable_epoch_visualization'] if 'enable_epoch_visualization' in config else False
-        self.visualization_interval = config['visualization_interval'] if 'visualization_interval' in config else 1  # 每隔几个epoch进行可视化
-        self.visualize_validation = config['visualize_validation'] if 'visualize_validation' in config else True  # 是否在验证时可视化
-        self.visualize_test = config['visualize_test'] if 'visualize_test' in config else True  # 是否在测试时可视化
+        self.visualization_interval = config['visualization_interval'] if 'visualization_interval' in config else 1
+        self.visualize_validation = config['visualize_validation'] if 'visualize_validation' in config else True
+        self.visualize_test = config['visualize_test'] if 'visualize_test' in config else True
 
     def _build_optimizer(self):
         r"""Init the Optimizer
@@ -147,9 +146,9 @@ class Trainer(AbstractTrainer):
         loss_func = loss_func or self.model.calculate_loss
         total_loss = None
         loss_batches = []
-        step_count = 0  # 添加步数计数器
+        step_count = 0
         for batch_idx, interaction in enumerate(train_data):
-            step_count += 1  # 每处理一个batch，步数加1
+            step_count += 1
             self.optimizer.zero_grad()
             second_inter = interaction.clone()
             losses = loss_func(interaction)
@@ -194,7 +193,6 @@ class Trainer(AbstractTrainer):
             #if batch_idx == 0:
             #    break
         
-        # 记录当前epoch的步数
         self.logger.info(f'Epoch {epoch_idx}: completed {step_count} training steps')
         return total_loss, loss_batches, step_count
 
@@ -255,7 +253,7 @@ class Trainer(AbstractTrainer):
             self.lr_scheduler.step()
 
             self.train_loss_dict[epoch_idx] = sum(train_loss) if isinstance(train_loss, tuple) else train_loss
-            self.epoch_steps_dict[epoch_idx] = steps  # 记录当前epoch的步数
+            self.epoch_steps_dict[epoch_idx] = steps
             training_end_time = time()
             train_loss_output = \
                 self._generate_train_loss_output(epoch_idx, training_start_time, training_end_time, train_loss, steps)
@@ -265,7 +263,6 @@ class Trainer(AbstractTrainer):
                 if post_info is not None:
                     self.logger.info(post_info)
             
-            # 用户-模态一致性追踪
             if (self.enable_epoch_visualization and 
                 epoch_idx % self.visualization_interval == 0 and
                 hasattr(self.model, 'track_user_modality_consistency')):
@@ -275,7 +272,6 @@ class Trainer(AbstractTrainer):
                 except Exception as e:
                     self.logger.warning(f"User-modality consistency tracking failed: {e}")
 
-            # eval: To ensure the test result is the best model under validation data, set self.eval_step == 1
             if (epoch_idx + 1) % self.eval_step == 0:
                 valid_start_time = time()
                 valid_score, valid_result = self._valid_epoch(valid_data)
@@ -287,7 +283,6 @@ class Trainer(AbstractTrainer):
                                      (epoch_idx, valid_end_time - valid_start_time, valid_score)
                 valid_result_output = 'valid result: \n' + dict2str(valid_result)
                 
-                # 验证阶段可视化
                 if (self.enable_epoch_visualization and 
                     self.visualize_validation and 
                     epoch_idx % self.visualization_interval == 0 and
@@ -301,7 +296,6 @@ class Trainer(AbstractTrainer):
                 # test
                 _, test_result = self._valid_epoch(test_data)
                 
-                # 测试阶段可视化
                 if (self.enable_epoch_visualization and 
                     self.visualize_test and 
                     epoch_idx % self.visualization_interval == 0 and
@@ -330,10 +324,8 @@ class Trainer(AbstractTrainer):
                         self.logger.info(stop_output)
                     break
         
-        # 训练结束后显示步数统计
         self._show_steps_summary()
         
-        # 训练结束后生成用户-模态一致性分析报告
         if (self.enable_epoch_visualization and 
             hasattr(self.model, 'analyze_user_modality_trends')):
             try:
@@ -345,7 +337,6 @@ class Trainer(AbstractTrainer):
         return self.best_valid_score, self.best_valid_result, self.best_test_upon_valid
 
     def _show_steps_summary(self):
-        """显示训练步数统计信息"""
         if not self.epoch_steps_dict:
             return
         
@@ -362,7 +353,6 @@ class Trainer(AbstractTrainer):
         self.logger.info(f"Max steps in an epoch: {max_steps}")
         self.logger.info(f"Min steps in an epoch: {min_steps}")
         
-        # 显示每个epoch的详细步数
         self.logger.info("Steps per epoch:")
         for epoch, steps in sorted(self.epoch_steps_dict.items()):
             self.logger.info(f"  Epoch {epoch}: {steps} steps")
