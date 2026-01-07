@@ -1,0 +1,19 @@
+embedding_size: 64
+feat_embed_dim: 64
+
+n_mm_layers: 1
+knn_k: 10
+mm_image_weight: 0.1
+aggr_mode: "add"
+construction: "diffusion"
+drop_rate: 0.3
+learning_rate: [0.0001]
+reg_weight: 0.001
+diff_weight: [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5]
+symile_weight: [0.9, 1.0]
+warmup_epochs: 0
+noise_steps: [600]
+logit_scale_init: 4
+beta_end: 0.01
+
+hyper_parameters: ["learning_rate", "diff_weight", "symile_weight", "noise_steps"]
