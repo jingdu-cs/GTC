@@ -4,7 +4,7 @@ use_gpu: True
 seed: [999]
 
 # multi-modal raw features
-data_path: '/scratch/hn98/jd2651/data/'
+data_path: '/scratch/'
 inter_splitting_label: 'x_label'
 filter_out_cod_start_users: True
 is_multimodal_model: True
