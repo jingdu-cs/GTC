@@ -1,10 +1,3 @@
-# coding: utf-8
-# @email: enoche.chow@gmail.com
-
-"""
-Run application
-##########################
-"""
 from logging import getLogger
 from itertools import product
 from utils.dataset import RecDataset
@@ -52,7 +45,6 @@ def quick_start(model, dataset, config_dict, save_model=True, mg=False, save_dir
         EvalDataLoader(config, valid_dataset, additional_dataset=train_dataset, batch_size=config['eval_batch_size']),
         EvalDataLoader(config, test_dataset, additional_dataset=train_dataset, batch_size=config['eval_batch_size']))
 
-    ############ Dataset loadded, run model
     hyper_ret = []
     val_metric = config['valid_metric'].lower()
     best_test_value = 0.0
