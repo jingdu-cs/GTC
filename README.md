@@ -32,7 +32,7 @@ To ensure a reproducible environment, we recommend using a virtual environment (
 
 ### Prerequisites
 
-* Python 3.10
+* Python >= 3.8
 * CUDA-enabled GPU (recommended for training)
 
 ### Setup Steps
