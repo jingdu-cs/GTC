@@ -9,8 +9,8 @@ construction: "diffusion"
 drop_rate: 0.3
 learning_rate: [0.0001]
 reg_weight: 0.001
-diff_weight: [0.5, 1, 1.5, 2, 2.5, 3, 3.5, 4, 4.5, 5]
-symile_weight: [0.9, 1.0]
+diff_weight: [0.7]
+symile_weight: [0.4, 0.5]
 warmup_epochs: 0
 noise_steps: [600]
 logit_scale_init: 4
