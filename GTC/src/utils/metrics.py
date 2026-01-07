@@ -1,9 +1,3 @@
-# encoding: utf-8
-# @email: enoche.chow@gmail.com
-"""
-############################
-"""
-
 from logging import getLogger
 
 import numpy as np
@@ -30,7 +24,6 @@ def recall2_(pos_index, pos_len):
 def ndcg_(pos_index, pos_len):
     r"""NDCG_ (also known as normalized discounted cumulative gain) is a measure of ranking quality.
     Through normalizing the score, users and their recommendation list results in the whole test set can be evaluated.
-    .. _NDCG: https://en.wikipedia.org/wiki/Discounted_cumulative_gain#Normalized_DCG
 
     .. math::
         \begin{gather}
@@ -69,8 +62,6 @@ def map_(pos_index, pos_len):
         In this case the normalization factor used is :math:`\frac{1}{\min (m,N)}`, which prevents your AP score from
         being unfairly suppressed when your number of recommendations couldn't possibly capture all the correct ones.
 
-    .. _map: http://sdsawtelle.github.io/blog/output/mean-average-precision-MAP-for-recommender-systems.html#MAP-for-Recommender-Algorithms
-
     .. math::
         \begin{align*}
         \mathrm{AP@N} &= \frac{1}{\mathrm{min}(m,N)}\sum_{k=1}^N P(k) \cdot rel(k) \\
@@ -92,7 +83,6 @@ def map_(pos_index, pos_len):
 def precision_(pos_index, pos_len):
     r"""Precision_ (also called positive predictive value) is the fraction of
     relevant instances among the retrieved instances
-    .. _precision: https://en.wikipedia.org/wiki/Precision_and_recall#Precision
 
     .. math::
         \mathrm {Precision@K} = \frac{|Rel_u \cap Rec_u|}{Rec_u}
