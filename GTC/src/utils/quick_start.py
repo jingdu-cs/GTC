@@ -33,7 +33,7 @@ def quick_start(model, dataset, config_dict, save_model=True, mg=False, save_dir
     # print dataset statistics
     logger.info(str(dataset))
     # File for storing test/validation results
-    config['save_dir'] = "/scratch/hn98/jd2651/evaluation/diffweight/" + str(config['dataset']) + '/' + str(model) + '/' + 'diff_' + str(config['diff_weight']) + '_symile_' + str(config['symile_weight']) + '_alpha_' + str(config['alpha']) + '_step_' + str(config['noise_steps'])
+    config['save_dir'] = "/scratch/" + str(config['dataset']) + '/' + str(model) + '/' + 'diff_' + str(config['diff_weight']) + '_symile_' + str(config['symile_weight']) + '_alpha_' + str(config['alpha']) + '_step_' + str(config['noise_steps'])
     if not os.path.exists(config['save_dir']):
         os.makedirs(config['save_dir'])
     results_file = os.path.join(config['save_dir'], 'results.log')
