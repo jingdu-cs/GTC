@@ -12,9 +12,9 @@ from utils.diffusion import Diffusion
 from utils.corr import Total_Correlation
 
 
-class MMR_DRAGON(GeneralRecommender):
+class GTC(GeneralRecommender):
     def __init__(self, config, dataset):
-        super(MMR_DRAGON, self).__init__(config, dataset)
+        super(GTC, self).__init__(config, dataset)
 
         num_user = self.n_users
         num_item = self.n_items
@@ -47,7 +47,7 @@ class MMR_DRAGON(GeneralRecommender):
         self.v_diffusion = Diffusion(noise_steps=config['noise_steps'], beta_end=config['beta_end'], device=self.device)
         self.diffusion_loss = nn.MSELoss()
         self.diff_weight = config["diff_weight"]
-        self.symile_loss = Total_Correlation()
+        self.tc_loss = Total_Correlation()
         self.symile_weight = config["symile_weight"]
         self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
         dataset_path = os.path.abspath(config['data_path'] + config['dataset'])
@@ -225,7 +225,7 @@ class MMR_DRAGON(GeneralRecommender):
 
             self.tot_corr_loss = torch.tensor(0.0, requires_grad=True)
             logit_scale_exp = self.logit_scale.exp()
-            self.tot_corr_loss = self.symile_loss(
+            self.tot_corr_loss = self.tc_loss(
                 [self.i_rep_norm, self.v_rep_norm, self.t_rep_norm], logit_scale_exp)
 
             self.i_rep, self.i_preference = self.i_gcn(self.edge_index, self.inter_rep)
