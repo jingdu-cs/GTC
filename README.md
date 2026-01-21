@@ -34,6 +34,17 @@ To ensure a reproducible environment, we recommend using a virtual environment (
 
 * Python >= 3.8
 * CUDA-enabled GPU (recommended for training)
+* numpy>=1.21.5
+* pandas>=1.3.5
+* python>=3.8
+* scipy>=1.7.3
+* torch>=2.0.5
+* pyyaml>=6.0
+* matplotlib>=3.5.2
+* torchvision>=0.15.2
+* torchaudio>=2.0.2
+* torch_geometric>=2.0.4
+* scikit-learn>=1.0.0
 
 ### Setup Steps
 
