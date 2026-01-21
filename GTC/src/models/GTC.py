@@ -91,7 +91,6 @@ class GTC(GeneralRecommender):
         # Attention weights for user multi-modal fusion
         self.weight_u = nn.Parameter(nn.init.xavier_normal_(
             torch.tensor(np.random.randn(self.num_user, 3, 1), dtype=torch.float32, requires_grad=True)))
-            # torch.tensor(np.random.randn(self.num_user, 2, 1), dtype=torch.float32, requires_grad=True)))
         self.weight_u.data = F.softmax(self.weight_u, dim=1)
 
         self.item_index = torch.zeros([self.num_item], dtype=torch.long)
