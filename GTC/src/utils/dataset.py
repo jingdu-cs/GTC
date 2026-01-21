@@ -24,7 +24,6 @@ class RecDataset(object):
         if df is not None:
             self.df = df
             return
-        # if all files exists
         check_file_list = [self.config['inter_file_name']]
         for i in check_file_list:
             file_path = os.path.join(self.dataset_path, i)
