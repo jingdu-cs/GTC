@@ -7,7 +7,6 @@ import os
 import yaml
 import argparse
 
-
 def gen_user_matrix(all_edge, no_users):
     edge_dict = defaultdict(set)
 
