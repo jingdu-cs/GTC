@@ -12,7 +12,6 @@ which python
 python --version
 
 echo "GPU information:"
-nvidia-smi 
 
 echo "Starting Python script at $(date)"
 python main.py --model "GTC" --dataset "sports"
