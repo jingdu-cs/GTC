@@ -17,5 +17,8 @@ nvidia-smi
 echo "Starting Python script at $(date)"
 python main.py --model "GTC" --dataset "sports"
 
+conda deactivate
+
 # 输出结束时间
 echo "Job finished at $(date)"
+
