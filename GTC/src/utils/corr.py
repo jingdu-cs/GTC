@@ -18,8 +18,8 @@ def batched_matrix_multiply(anchor_rep, non_anchor_shuff, chunk_size):
     logits = torch.zeros((bsz, bsz), device=anchor_rep.device, dtype=torch.float16)
 
     for i in range(0, bsz, chunk_size):
-        chunk = non_anchor_shuff[i:i + chunk_size]  # Select a chunk of non_anchor_shuff
-        logits[:, i:i + chunk_size] = anchor_rep @ chunk.T  # Compute and store in the corresponding positions
+        chunk = non_anchor_shuff[i:i + chunk_size]
+        logits[:, i:i + chunk_size] = anchor_rep @ chunk.T
 
     return logits
 
@@ -59,21 +59,17 @@ class Total_Correlation:
         Returns:
             logits (torch.Tensor): Logits for anchor_rep of size (bsz, bsz).
         """
-        # shuffle rows of each tensor in non_anchor_reps and element-wise multiply
         non_anchor_shuff = torch.ones_like(anchor_rep)
         for r in non_anchor_reps:
-            # cannot use inplace operations like *= because of autograd
             non_anchor_shuff = non_anchor_shuff * r[torch.randperm(r.shape[0])]
 
         logits = anchor_rep @ torch.t(non_anchor_shuff) # (bsz, bsz)
 
         MIP_of_positive_samples = anchor_rep.clone()
         for r in non_anchor_reps:
-            # cannot use inplace operations like *= because of autograd
             MIP_of_positive_samples = MIP_of_positive_samples * r
         MIP_of_positive_samples = MIP_of_positive_samples.sum(axis=1) # (bsz)
 
-        # insert positive samples along diagonal of shuffled logits
         return torch.where(torch.eye(n=anchor_rep.shape[0]).to(anchor_rep.device) > 0.5,
                            MIP_of_positive_samples,
                            logits)
@@ -91,7 +87,6 @@ class Total_Correlation:
                                                tensors with shifted rows. The length of the list is
                                                bsz^len(tensors).
         """
-        # base case
         if len(tensors) == 2:
             y, z = tensors
             y_z = []

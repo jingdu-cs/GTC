@@ -83,11 +83,11 @@ class Trainer(AbstractTrainer):
         self.best_valid_result = tmp_dd
         self.best_test_upon_valid = tmp_dd
         self.train_loss_dict = dict()
-        self.epoch_steps_dict = dict()  # 追踪每个epoch的步数
+        self.epoch_steps_dict = dict()
         self.optimizer = self._build_optimizer()
 
         #fac = lambda epoch: 0.96 ** (epoch / 50)
-        lr_scheduler = config['learning_rate_scheduler']        # check zero?
+        lr_scheduler = config['learning_rate_scheduler']
         fac = lambda epoch: lr_scheduler[0] ** (epoch / lr_scheduler[1])
         scheduler = optim.lr_scheduler.LambdaLR(self.optimizer, lr_lambda=fac)
         self.lr_scheduler = scheduler

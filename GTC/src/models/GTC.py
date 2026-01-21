@@ -107,13 +107,10 @@ class GTC(GeneralRecommender):
 
         self.MLP_user = nn.Linear(self.dim_latent * 2, self.dim_latent)
 
-        # ID GCN: 64-dim input, no projection needed
         self.i_gcn = GCN(self.dataset, batch_size, num_user, num_item, dim_x, self.aggr_mode,
                          num_layer=self.num_layer, has_id=has_id, dropout=self.drop_rate, dim_latent=None,
                          device=self.device, features=self.id_rep)
         
-        # Visual GCN: receives 64-dim features from v_mlp, no projection needed
-        # Create a dummy 64-dim tensor for dimension inference
         if self.v_feat is not None:
             dummy_v_feat = torch.zeros(self.num_item, self.dim_latent)
             self.v_gcn = GCN(self.dataset, batch_size, num_user, num_item, dim_x, self.aggr_mode,
@@ -193,8 +190,8 @@ class GTC(GeneralRecommender):
 
             return pos_scores, neg_scores
         else:
-            v_feat = self.v_mlp(self.v_feat)  # 4096 -> 64
-            t_feat = self.t_mlp(self.t_feat)  # 4096 -> 64
+            v_feat = self.v_mlp(self.v_feat)
+            t_feat = self.t_mlp(self.t_feat)
 
             if self.training:
                 t = self.t_diffusion.sample_timesteps(self.id_rep.shape[0]).to(self.device)

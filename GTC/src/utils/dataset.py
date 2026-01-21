@@ -31,7 +31,6 @@ class RecDataset(object):
             if not os.path.isfile(file_path):
                 raise ValueError('File {} not exist'.format(file_path))
 
-        # load rating file from data path?
         self.load_inter_graph(config['inter_file_name'])
         self.item_num = int(max(self.df[self.iid_field].values)) + 1
         self.user_num = int(max(self.df[self.uid_field].values)) + 1
