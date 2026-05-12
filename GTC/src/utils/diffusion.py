@@ -19,12 +19,12 @@ class Diffusion:
         self.beta = self.prepare_noise_schedule().to(device)
         self.alpha = 1. - self.beta
         self.alpha_hat = torch.cumprod(self.alpha, dim=0)
-        self.denosing = UNet_conditional(embed_dim=64, time_dim=64, cond_dim=64).to(device)
+        self.denosing = UNet_conditional(embed_dim=64, time_dim=64, cond_dim=64, device=device).to(device)
 
     def prepare_noise_schedule(self):
         return torch.linspace(self.beta_start, self.beta_end, self.noise_steps)
 
-    def noise_images(self, x, t, cond):
+    def noise_images(self, x, t, cond=None):
         sqrt_alpha_hat = torch.sqrt(self.alpha_hat[t])[:, None]
         sqrt_one_minus_alpha_hat = torch.sqrt(1 - self.alpha_hat[t])[:, None]
         

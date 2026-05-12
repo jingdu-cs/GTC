@@ -23,6 +23,7 @@ class RecDataset(object):
 
         if df is not None:
             self.df = df
+            self.inter_num = len(self.df)
             return
         check_file_list = [self.config['inter_file_name']]
         for i in check_file_list:
@@ -33,6 +34,7 @@ class RecDataset(object):
         self.load_inter_graph(config['inter_file_name'])
         self.item_num = int(max(self.df[self.iid_field].values)) + 1
         self.user_num = int(max(self.df[self.uid_field].values)) + 1
+        self.inter_num = len(self.df)
 
     def load_inter_graph(self, file_name):
         inter_file = os.path.join(self.dataset_path, file_name)

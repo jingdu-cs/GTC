@@ -51,8 +51,11 @@ class GTC(GeneralRecommender):
         self.symile_weight = config["symile_weight"]
         self.logit_scale = nn.Parameter(torch.ones([]) * np.log(1 / 0.07))
         dataset_path = os.path.abspath(config['data_path'] + config['dataset'])
-        self.user_graph_dict = np.load(os.path.join(dataset_path, config['user_graph_dict_file']),
-                                       allow_pickle=True).item()
+        user_graph_path = os.path.join(dataset_path, config['user_graph_dict_file'])
+        if os.path.exists(user_graph_path):
+            self.user_graph_dict = np.load(user_graph_path, allow_pickle=True).item()
+        else:
+            self.user_graph_dict = {i: ([i], [1.0]) for i in range(num_user)}
 
         mm_adj_file = os.path.join(dataset_path, 'mm_adj_{}.pt'.format(self.knn_k))
 
@@ -84,6 +87,9 @@ class GTC(GeneralRecommender):
 
         # packing interaction in training into edge_index
         train_interactions = dataset.inter_matrix(form='coo').astype(np.float32)
+        self.item_user_adj, self.item_has_users = self.build_item_user_adj(train_interactions)
+        self.item_user_adj = self.item_user_adj.to(self.device)
+        self.item_has_users = self.item_has_users.to(self.device)
         edge_index = self.pack_edge_index(train_interactions)
         self.edge_index = torch.tensor(edge_index, dtype=torch.long).t().contiguous().to(self.device)
         self.edge_index = torch.cat((self.edge_index, self.edge_index[[1, 0]]), dim=1)
@@ -151,6 +157,44 @@ class GTC(GeneralRecommender):
         self.epoch_user_graph, self.user_weight_matrix = self.topk_sample(self.k)
         self.user_weight_matrix = self.user_weight_matrix.to(self.device)
 
+    def build_item_user_adj(self, inter_mat):
+        rows = inter_mat.col
+        cols = inter_mat.row
+        item_degree = np.bincount(rows, minlength=self.num_item).astype(np.float32)
+        values = 1.0 / np.maximum(item_degree[rows], 1.0)
+        indices = torch.tensor(np.vstack([rows, cols]), dtype=torch.long)
+        values = torch.tensor(values, dtype=torch.float32)
+        adj = torch.sparse_coo_tensor(indices, values, (self.num_item, self.num_user)).coalesce()
+        has_users = torch.tensor(item_degree > 0, dtype=torch.bool).unsqueeze(1)
+        return adj, has_users
+
+    def get_item_user_conditions(self, user_embeddings):
+        item_user_pref = torch.sparse.mm(self.item_user_adj, user_embeddings)
+        item_user_pref = torch.where(self.item_has_users, item_user_pref, self.id_rep)
+        return F.normalize(item_user_pref, p=2.0, dim=1)
+
+    def denoise_content(self, diffusion, content_feat, timesteps, user_condition):
+        xt, noise = diffusion.noise_images(content_feat, timesteps)
+        predicted_noise = diffusion.denosing(xt, timesteps, user_condition)
+        alpha_hat_t = diffusion.alpha_hat[timesteps][:, None]
+        denoised = (xt - torch.sqrt(1 - alpha_hat_t) * predicted_noise) / torch.sqrt(alpha_hat_t)
+        return denoised, self.diffusion_loss(noise, predicted_noise)
+
+    def user_conditioned_pair_loss(self, user_condition, pos_items, neg_items, v_feat, t_feat):
+        pair_count = pos_items.shape[0] + neg_items.shape[0]
+        timesteps = self.t_diffusion.sample_timesteps(pair_count).to(self.device)
+        pair_user_condition = torch.cat([user_condition, user_condition], dim=0)
+
+        pair_v_feat = torch.cat([v_feat[pos_items], v_feat[neg_items]], dim=0)
+        pair_t_feat = torch.cat([t_feat[pos_items], t_feat[neg_items]], dim=0)
+        pair_id_feat = torch.cat([self.id_rep[pos_items], self.id_rep[neg_items]], dim=0)
+
+        pair_v, v_loss = self.denoise_content(self.v_diffusion, pair_v_feat, timesteps, pair_user_condition)
+        pair_t, t_loss = self.denoise_content(self.t_diffusion, pair_t_feat, timesteps, pair_user_condition)
+        pair_rep = self.cross_modal_refinement(pair_id_feat, pair_v, pair_t)
+        pos_pair_rep, neg_pair_rep = torch.split(pair_rep, pos_items.shape[0], dim=0)
+        return pos_pair_rep, neg_pair_rep, v_loss + t_loss
+
     def cross_modal_refinement(self, id_feat, v_feat, t_feat, temperature=1.0):
         mip_id_v = (id_feat * v_feat).sum(dim=1, keepdim=True)
         mip_id_t = (id_feat * t_feat).sum(dim=1, keepdim=True)
@@ -191,31 +235,25 @@ class GTC(GeneralRecommender):
         else:
             v_feat = self.v_mlp(self.v_feat)
             t_feat = self.t_mlp(self.t_feat)
+            self.base_i_rep, self.i_preference = self.i_gcn(self.edge_index, self.id_rep)
+            base_user_rep = self.base_i_rep[:self.num_user]
+            base_item_rep = self.base_i_rep[self.num_user:]
+            item_user_condition = self.get_item_user_conditions(base_user_rep)
 
             if self.training:
                 t = self.t_diffusion.sample_timesteps(self.id_rep.shape[0]).to(self.device)
             else:
                 t = torch.ones(self.id_rep.shape[0], dtype=torch.long).to(self.device) * (self.t_diffusion.noise_steps // 2)
             
-            xt_v, v_noise = self.v_diffusion.noise_images(v_feat, t, self.id_rep)
-            xt_t, t_noise = self.t_diffusion.noise_images(t_feat, t, self.id_rep)
-            
-            v_predict_noise = self.v_diffusion.denosing(xt_v, t, self.id_rep)
-            t_predict_noise = self.t_diffusion.denosing(xt_t, t, self.id_rep)
-            
-            self.gen_loss = self.diffusion_loss(v_noise, v_predict_noise) + self.diffusion_loss(t_noise, t_predict_noise)
+            denoise_v, v_global_loss = self.denoise_content(self.v_diffusion, v_feat, t, item_user_condition)
+            denoise_t, t_global_loss = self.denoise_content(self.t_diffusion, t_feat, t, item_user_condition)
+            self.gen_loss = v_global_loss + t_global_loss
 
-            alpha_hat_t = self.v_diffusion.alpha_hat[t][:, None]
-            sqrt_alpha_hat_t = torch.sqrt(alpha_hat_t)
-            sqrt_one_minus_alpha_hat_t = torch.sqrt(1 - alpha_hat_t)
-            
-            denoise_v = (xt_v - sqrt_one_minus_alpha_hat_t * v_predict_noise) / sqrt_alpha_hat_t
-            denoise_t = (xt_t - sqrt_one_minus_alpha_hat_t * t_predict_noise) / sqrt_alpha_hat_t
-
-            reconstruct_rep = self.cross_modal_refinement(self.id_rep, denoise_v, denoise_t)
+            reconstruct_rep = self.cross_modal_refinement(base_item_rep, denoise_v, denoise_t)
             self.inter_rep = reconstruct_rep
+            self.user_conditioned_item_rep = reconstruct_rep
 
-            self.i_rep_norm = F.normalize(self.id_rep, p=2.0, dim=1)
+            self.i_rep_norm = F.normalize(base_item_rep, p=2.0, dim=1)
             self.v_rep_norm = F.normalize(denoise_v, p=2.0, dim=1)
             self.t_rep_norm = F.normalize(denoise_t, p=2.0, dim=1)
 
@@ -276,6 +314,16 @@ class GTC(GeneralRecommender):
             pos_scores = torch.sum(user_tensor * pos_item_tensor, dim=1)
             neg_scores = torch.sum(user_tensor * neg_item_tensor, dim=1)
 
+            if self.training:
+                user_condition = F.normalize(base_user_rep[user_nodes], p=2.0, dim=1)
+                pos_items = pos_item_nodes - self.n_users
+                neg_items = neg_item_nodes - self.n_users
+                pos_pair_rep, neg_pair_rep, pair_gen_loss = self.user_conditioned_pair_loss(
+                    user_condition, pos_items, neg_items, v_feat, t_feat)
+                pos_scores = pos_scores + torch.sum(user_condition * pos_pair_rep, dim=1)
+                neg_scores = neg_scores + torch.sum(user_condition * neg_pair_rep, dim=1)
+                self.gen_loss = self.gen_loss + pair_gen_loss
+
             return pos_scores, neg_scores
 
     def calculate_loss(self, interaction):
@@ -302,6 +350,9 @@ class GTC(GeneralRecommender):
 
         temp_user_tensor = user_tensor[interaction[0], :]
         score_matrix = torch.matmul(temp_user_tensor, item_tensor.t())
+        if hasattr(self, 'base_i_rep') and hasattr(self, 'user_conditioned_item_rep'):
+            user_condition = F.normalize(self.base_i_rep[interaction[0]], p=2.0, dim=1)
+            score_matrix = score_matrix + torch.matmul(user_condition, self.user_conditioned_item_rep.t())
         return score_matrix
 
     def topk_sample(self, k):

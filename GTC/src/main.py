@@ -6,7 +6,7 @@ os.environ['NUMEXPR_MAX_TdHREADS'] = '48'
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
-    parser.add_argument('--model', '-m', type=str, default='MMR_SYMILE', help='name of models')
+    parser.add_argument('--model', '-m', type=str, default='GTC', help='name of models')
     parser.add_argument('--dataset', '-d', type=str, default='sports', help='name of datasets')
     parser.add_argument('--mg', action="store_true", help='whether to use Mirror Gradient, default is False')
 
@@ -17,5 +17,4 @@ if __name__ == '__main__':
     args, _ = parser.parse_known_args()
 
     quick_start(model=args.model, dataset=args.dataset, config_dict=config_dict, save_model=True, mg=args.mg)
-
 
