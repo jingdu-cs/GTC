@@ -63,10 +63,16 @@ pip install -r requirements.txt
 
 ```
 
+3. **Data**:
+
+   * Download the rating and metadata files from the [Amazon Review Data](https://cseweb.ucsd.edu/~jmcauley/datasets/amazon_v2/) repository.
+   * Then preprocess the data step by step using the scripts in the `preprocessing` folder in the following order:
+
+     `0rating.py` → `1split.py` → `2reindex.py` → `3feature.py` → `dualgnn-gen-u-u-matrix.py`
 
 ---
 
-## 3. Usage (Quick Start)
+## 📖 Usage (Quick Start)
 
 To verify the installation and run the model on the "Sports" dataset using the provided shell script `src/run_gtc.sh`.
 
