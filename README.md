@@ -18,10 +18,10 @@ The framework is designed with a modular architecture to facilitate reproducible
 │   │   ├── dataset/           # Dataset-specific settings (e.g., baby, cell, sports)
 │   │   └── model/             # Model-specific hyperparameters (e.g., GTC, mg)
 │   ├── models/                # Architecture implementations
-│   │   └── mmr_dragon.py      # Main implementation of the proposed model
+│   │   └── GTC.py             # Main implementation of the proposed model
 │   ├── utils/                 # Auxiliary helper functions and data loaders
 │   ├── main.py                # Primary execution entry point
-│   └── test-sports.sh         # Shell script for automated testing and inference
+│   └── run_gtc.sh             # Shell script for automated testing and inference
 └── requirements.txt           # Environment dependencies
 ```
 
@@ -68,6 +68,6 @@ pip install -r requirements.txt
 
 ## 3. Usage (Quick Start)
 
-To verify the installation and run the model on the "Sports" dataset using the provided shell script `run_gtc.sh`.
+To verify the installation and run the model on the "Sports" dataset using the provided shell script `src/run_gtc.sh`.
 
 ---
