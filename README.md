@@ -1,5 +1,5 @@
-# Conditional Generative Total Correlation Learning for Multi-Modal Recommendation
-This repository contains the official implementation of the model described in the paper "Conditional Generative Total Correlation Learning for Multi-Modal Recommendation". 
+# Collaborative Identity-Guided Generative Total Correlation Learning for Multi-Modal Recommendation
+This repository contains the official implementation of the model described in the paper "Collaborative Identity-Guided Generative Total Correlation Learning for Multi-Modal Recommendation". 
 The framework is designed with a modular architecture to facilitate reproducible experiments in multimodal recommendation.
 
 
